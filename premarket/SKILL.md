@@ -108,6 +108,19 @@ Build a rival prompt and run it through the bridge. Critical: the rival gets
 the **same raw data**, the **same rules**, and **none of your conclusions** —
 do not leak your picks, your verdict, or your scores into its prompt.
 
+**Trim the JSON before sending it — do not paste the full scan output.**
+The full `gappers` array (5 news items per ticker × 20 tickers) plus 25
+`market_headlines` regularly runs ~30KB+, and prompts that size are what
+actually causes Codex to hang or time out — the CLI itself is fine on a
+normal-sized prompt (confirmed: a trivial prompt returns in seconds; a
+~7-8KB trimmed payload has run reliably; a ~34KB untrimmed one has hung
+repeatedly). Build a reduced payload with only what the rules check:
+per gapper keep `symbol`, `price`, `gap_pct`, `volume`,
+`rvol_fullday_standin`, `above_prev_high`, `prev_close`, `prev_high`, and
+just the single best `catalyst` line (drop the full `news` array); drop
+`market_headlines` entirely or cap it at ~5; keep `snapshot` and
+`econ_calendar` as-is (already small). Target under ~10KB total.
+
 ```bash
 ~/.claude/bin/codex-ask.sh "$(cat <<'EOF'
 You are an independent premarket analyst. You are auditing raw scan data
@@ -116,8 +129,10 @@ against fixed rules. Be skeptical; your job is to catch bad picks.
 RULES (source of truth, do not loosen):
 <paste WATCHLIST_CRITERIA.md here>
 
-RAW SCAN DATA (JSON):
-<paste the scan JSON here — trim market_headlines to ~10 if needed for size>
+TRIMMED SCAN DATA (JSON — gappers reduced to rule-relevant fields + one
+catalyst line each; market_headlines capped at ~5; snapshot/econ_calendar
+as-is):
+<paste the trimmed JSON here>
 
 Answer with:
 1. TAPE: one-line read of the overall tape (risk-on / risk-off / mixed) and why.
@@ -131,8 +146,8 @@ EOF
 )"
 ```
 
-If the bridge errors or times out, fall back to single-brain mode as in
-Phase 0 and note it in the report.
+If the bridge errors or times out even on the trimmed payload, fall back to
+single-brain mode as in Phase 0 and note it in the report.
 
 ### Phase 4 — Compare and settle conviction
 
