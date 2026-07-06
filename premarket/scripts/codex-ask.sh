@@ -54,7 +54,12 @@ trap 'rm -f "$STDERR_FILE"' EXIT
 # --skip-git-repo-check : allow running outside a git repo
 # --sandbox read-only   : Codex only reads and answers; it must not
 #                         touch files or the network on its own
-codex exec --skip-git-repo-check --sandbox read-only "$PROMPT" 2>"$STDERR_FILE" &
+# </dev/null            : the prompt is already passed as an argument (or was
+#                         already consumed from stdin above) — closing stdin
+#                         here stops codex from ever blocking on a read that
+#                         will never get an EOF when this script is invoked
+#                         from a tool harness whose pipe stays open.
+codex exec --skip-git-repo-check --sandbox read-only "$PROMPT" </dev/null 2>"$STDERR_FILE" &
 codex_pid=$!
 ( sleep "$CODEX_TIMEOUT_SECONDS" && kill -TERM "$codex_pid" 2>/dev/null ) &
 watchdog_pid=$!
