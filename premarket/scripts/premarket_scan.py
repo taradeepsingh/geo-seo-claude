@@ -56,6 +56,18 @@ except ImportError:
 
 import urllib.request
 
+# Common failure on macOS (esp. python.org installers): the interpreter has no
+# access to the system CA trust store, so every HTTPS call fails with
+# CERTIFICATE_VERIFY_FAILED. certifi ships its own bundle — point both
+# urllib's ssl context and requests (used internally by yfinance) at it
+# unless the user already set these explicitly.
+try:
+    import certifi
+    os.environ.setdefault("SSL_CERT_FILE", certifi.where())
+    os.environ.setdefault("REQUESTS_CA_BUNDLE", certifi.where())
+except ImportError:
+    pass
+
 ET = ZoneInfo("America/New_York") if ZoneInfo else timezone(timedelta(hours=-5))
 
 CACHE_DIR = os.path.expanduser("~/.premarket")
@@ -403,13 +415,25 @@ def main():
     log("fetching economic calendar...")
     calendar = econ_calendar()
 
+    now = now_et()
+    stale_bar_note = None
+    if now.time() < datetime.strptime("09:30", "%H:%M").time():
+        stale_bar_note = (
+            "Gap % is computed from the two most recent DAILY closes yfinance "
+            "returns, not a live premarket tick. Before the 9:30am ET open, "
+            "yfinance's 'latest' daily bar can still be the prior session's — "
+            "treat gap% as last-session context until it's confirmed against "
+            "a live quote after the open."
+        )
+
     doc = {
-        "generated_at_et": now_et().strftime("%Y-%m-%d %H:%M:%S %Z"),
+        "generated_at_et": now.strftime("%Y-%m-%d %H:%M:%S %Z"),
         "universe": {"size": len(universe), "source": universe_source},
         "filters": {"min_gap_pct": args.min_gap, "min_volume": args.min_volume, "top": args.top},
         "notes": [n for n in [
             gap_note,
             "RVOL is a full-day stand-in: yfinance reports almost no premarket volume.",
+            stale_bar_note,
         ] if n],
         "snapshot": snapshot,
         "gappers": gappers,
