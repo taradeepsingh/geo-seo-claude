@@ -35,8 +35,14 @@ DISCORD_CHUNK = 1900  # Discord hard limit is 2000 chars per message
 
 def post_json(url, payload, headers):
     body = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=body, method="POST",
-                                 headers={"Content-Type": "application/json", **headers})
+    # Cloudflare (fronting both Resend and Discord) blocks urllib's default
+    # "Python-urllib/x.y" User-Agent as bot traffic (error code 1010) even
+    # with a valid, correctly-authorized request. A generic tool-like UA
+    # clears it; there's nothing browser-specific required.
+    req = urllib.request.Request(
+        url, data=body, method="POST",
+        headers={"Content-Type": "application/json", "User-Agent": "curl/8.7.1", **headers},
+    )
     with urllib.request.urlopen(req, timeout=30) as resp:
         return resp.status, resp.read().decode("utf-8", errors="replace")
 
