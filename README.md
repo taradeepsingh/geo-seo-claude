@@ -215,6 +215,39 @@ Generates professional GEO reports in markdown or PDF format. PDF reports includ
 
 ---
 
+## Bonus Skill: AI Premarket Analyst (Claude + Codex)
+
+A separate, self-contained skill based on Humbled Trader's
+[free AI premarket analyst build](https://www.humbledtrader.com/blog/claude-codex-ai-premarket-analyst/):
+two rival AI brains (Claude + OpenAI Codex) scan premarket movers, find
+catalysts, apply backtested watchlist rules, and email a clean morning report.
+Market data comes from keyless yfinance, news from free RSS, and the economic
+calendar from a free feed — the only paid pieces are the Claude and ChatGPT
+plans you may already have.
+
+```bash
+./install-premarket.sh
+# optional second brain:
+npm install -g @openai/codex && codex login
+```
+
+| Command | What It Does |
+|---------|-------------|
+| `/premarket` | Full two-brain run: scan → analysis → report saved locally |
+| `/premarket scan` | Data only: gappers, snapshot, econ calendar |
+| `/premarket email` | Full run + email via Resend (and optional Discord) |
+| `/premarket schedule` | Daily 6am auto-run (launchd/cron with catch-up) |
+
+Files: skill at `~/.claude/skills/premarket/`, Codex bridge at
+`~/.claude/bin/codex-ask.sh`, backtested rules in `WATCHLIST_CRITERIA.md`
+(edit it — it's the source of truth), reports in `~/.premarket/reports/`.
+
+> Educational information only — not financial advice.
+
+Remove with: `rm -rf ~/.claude/skills/premarket ~/.claude/bin/codex-ask.sh`
+
+---
+
 ## Uninstall
 
 ```bash
