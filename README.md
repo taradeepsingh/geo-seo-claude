@@ -242,6 +242,12 @@ Files: skill at `~/.claude/skills/premarket/`, Codex bridge at
 `~/.claude/bin/codex-ask.sh`, backtested rules in `WATCHLIST_CRITERIA.md`
 (edit it — it's the source of truth), reports in `~/.premarket/reports/`.
 
+**Updating:** `install-premarket.sh` copies files from this repo into
+`~/.claude/skills/premarket/` and `~/.claude/bin/`. A `git pull` only updates
+this repo checkout — it does **not** touch those installed copies. After
+pulling any update, re-run `./install-premarket.sh` to sync the fix into the
+actual running skill (your customized `WATCHLIST_CRITERIA.md` is preserved).
+
 > Educational information only — not financial advice.
 
 Remove with: `rm -rf ~/.claude/skills/premarket ~/.claude/bin/codex-ask.sh`
